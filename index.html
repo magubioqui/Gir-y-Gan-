@@ -17,7 +17,7 @@
         #seccion-ruleta { display: none; text-align: center; position: relative; }
         .contenedor-canvas { position: relative; display: inline-block; margin-top: 15px; }
         #canvas { border: 6px solid #be986b; border-radius: 50%; max-width: 100%; height: auto; background: #252525; }
-        .flecha { position: absolute; right: -10px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 25px solid #be986b; z-index: 10; }
+        .flecha { position: absolute; right: -12px; top: 50%; transform: translateY(-50%) rotate(180deg); width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-right: 22px solid #be986b; z-index: 10; }
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
         .modal-content { background-color: #222; margin: auto; padding: 25px; border: 2px solid #be986b; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: aparecer 0.3s ease-out; }
         .modal-premio { font-size: 24px; font-weight: bold; color: #be986b; margin: 15px 0 5px 0; }
@@ -44,7 +44,7 @@
             <div class="flecha"></div>
             <canvas id="canvas" width="360" height="360"></canvas>
         </div>
-        <button id="btn-gira-ruleta" onclick="girar()">¡GIRAR RULETA!</button>
+        <button id="btn-gira-ruleta" onclick="comenzarGiro()">¡GIRAR RULETA!</button>
     </div>
 
     <div id="miModal" class="modal">
@@ -56,124 +56,7 @@
         </div>
     </div>
 
-    <script>
-        // REEMPLAZA las letras de abajo con la URL que copiaste en el Paso 2
-        const URL_GOOGLE_SHEETS = 'https://script.google.com/macros/s/AKfycbwdaIilBbmjdlx0p1PtWEPJpg-VWBf5RiASKaA2ePyf9mTHMlILgQJupCRgtrPCaVQcoA/exec ';
-
-        const opciones = [
-            "3 x 2 selecc.", "Seguí Participando", "10% Off", "50% Off en 2da", 
-            "10% Off", "¡Felicidades!...", "25% Off Prox/Com.", "10% Off", 
-            "Uff...", "10% Off", "2x1 selecc."
-        ];
-        
-        const colores = [
-            '#be986b', '#8a1e1e', '#ded4cc', '#be986b', 
-            '#ded4cc', '#3b7a3b', '#be986b', '#ded4cc', 
-            '#b56618', '#ded4cc', '#be986b'
-        ];
-
-        const aclaraciones = {
-            "10% Off": "EN EL INSTANTE",
-            "Seguí Participando": "La próxima vez será",
-            "3 x 2 selecc.": "EN SELECCIONADOS",
-            "2x1 selecc.": "EN SELECCIONADOS",
-            "Uff...": "Probá una vez más",
-            "25% Off Prox/Com.": "SIGUIENTE COMPRA (SELECCIONADOS)",
-            "¡Felicidades!...": "¡Ganaste un premio!",
-            "50% Off en 2da": "VÁLIDO EN EL INSTANTE"
-        };
-        
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const numOpciones = opciones.length;
-        const anguloArco = 2 * Math.PI / numOpciones;
-        let anguloInicio = 0;
-        let yaGiro = false;
-
-        function dibujarRuleta() {
-            const centro = 180;
-            ctx.clearRect(0, 0, 360, 360);
-            for (let i = 0; i < numOpciones; i++) {
-                const angulo = anguloInicio + i * anguloArco;
-                ctx.fillStyle = colores[i];
-                ctx.beginPath();
-                ctx.moveTo(centro, centro);
-                ctx.arc(centro, centro, centro - 4, angulo, angulo + anguloArco);
-                ctx.lineTo(centro, centro);
-                ctx.fill();
-                
-                ctx.save();
-                ctx.translate(centro, centro);
-                ctx.rotate(angulo + anguloArco / 2);
-                ctx.fillStyle = (colores[i] === '#ded4cc') ? '#121212' : '#ffffff';
-                ctx.font = "bold 11px sans-serif";
-                ctx.textAlign = "right";
-                ctx.fillText(opciones[i], centro - 20, 5);
-                ctx.restore();
-            }
-        }
-
-        function validarYEnviar(event) {
-            event.preventDefault();
-            const btnRegistro = document.getElementById('btn-registro');
-            btnRegistro.disabled = true;
-            btnRegistro.innerText = "Registrando...";
-
-            const nombre = document.getElementById('nombre').value;
-            const telefono = document.getElementById('telefono').value;
-
-            fetch(URL_GOOGLE_SHEETS, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: nombre, telefono: telefono })
-            })
-            .then(() => {
-                document.getElementById('nombre-usuario').innerText = nombre;
-                document.getElementById('seccion-registro').style.display = 'none';
-                document.getElementById('seccion-ruleta').style.display = 'block';
-                dibujarRuleta();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ocurrió un error. Intenta ingresar de nuevo.');
-                btnRegistro.disabled = false;
-                btnRegistro.innerText = "INGRESAR AHORA";
-            });
-        }
-
-        function girar() {
-            if (yaGiro) return;
-            yaGiro = true;
-            document.getElementById('btn-gira-ruleta').disabled = true;
-            let velocidad = Math.random() * 0.3 + 0.4;
-            function animar() {
-                velocidad *= 0.985;
-                anguloInicio += velocidad;
-                dibujarRuleta();
-                if (velocidad > 0.002) {
-                    requestAnimationFrame(animar);
-                } else {
-                    calcularPremio();
-                }
-            }
-            animar();
-        }
-
-        function calcularPremio() {
-            const anguloNormalizado = (anguloInicio % (2 * Math.PI));
-            const indicePremio = Math.floor((2 * Math.PI - anguloNormalizado) / anguloArco) % numOpciones;
-            const premioGanado = opciones[indicePremio];
-            const aclaracionPremio = aclaraciones[premioGanado] || "";
-            
-            document.getElementById('modal-premio').innerText = premioGanado;
-            document.getElementById('modal-aclaracion').innerText = aclaracionPremio;
-            document.getElementById('miModal').style.display = 'flex';
-        }
-
-        function cerrarModal() {
-            document.getElementById('miModal').style.display = 'none';
-        }
-    </script>
+    <!-- Enlazamos la lógica que crearemos en el paso 2 -->
+    <script src="script.js"></script>
 </body>
 </html>
