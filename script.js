@@ -1,27 +1,31 @@
 // REEMPLAZA las letras de abajo con la URL de tu Google Sheets
 const URL_GOOGLE_SHEETS = 'https://script.google.com/macros/s/AKfycbwdaIilBbmjdlx0p1PtWEPJpg-VWBf5RiASKaA2ePyf9mTHMlILgQJupCRgtrPCaVQcoA/exec';
 
-// EL ORDEN EXACTO QUE ME PASASTE (12 elementos)
+const imagenLogo = new Image();
+imagenLogo.src = 'logo.png'; 
+
+imagenLogo.onload = function() {
+    dibujarRuleta();
+};
+
+// LOS 12 ELEMENTOS EXACTOS EN SENTIDO HORARIO EMPEZANDO DESDE LA FLECHA
 const opciones = [
-    "¡Felicidades!",
-    "10% Off...",
-    "50% Off en 2da Unidad",
-    "Uff...",
-    "10% Off...",
-    "Seguí Participando",
-    "3x2 En Seleccionados",
-    "10% Off...",
-    "2x1 En Seleccionados",
-    "Uff...",
-    "10% Off...",
-    "25% Off Próxima Compra"
+    "Uff...", 
+    "10% Off...", 
+    "Seguí Participando", 
+    "3x2 En Seleccionados", 
+    "10% Off...", 
+    "2x1 En Seleccionados", 
+    "Uff...", 
+    "10% Off...", 
+    "25% Off Próxima Compra", 
+    "¡Felicidades!", 
+    "10% Off...", 
+    "50% Off en 2da Unidad"
 ];
 
-// COLORES ASIGNADOS PARA QUE QUEDE LINDA Y EN COMBINACIÓN
+// COLORES EXACTOS PARA LOS 12 ELEMENTOS CORRESPONDIENTES
 const colores = [
-    '#3b7a3b', // ¡Felicidades! (Verde)
-    '#ded4cc', // 10% Off... (Beige)
-    '#be986b', // 50% Off en 2da Unidad (Marrón)
     '#b56618', // Uff... (Naranja)
     '#ded4cc', // 10% Off... (Beige)
     '#8a1e1e', // Seguí Participando (Rojo)
@@ -30,10 +34,12 @@ const colores = [
     '#be986b', // 2x1 En Seleccionados (Marrón)
     '#b56618', // Uff... (Naranja)
     '#ded4cc', // 10% Off... (Beige)
-    '#be986b'  // 25% Off Próxima Compra (Marrón)
+    '#be986b', // 25% Off Próxima Compra (Marrón)
+    '#3b7a3b', // ¡Felicidades! (Verde)
+    '#ded4cc', // 10% Off... (Beige)
+    '#be986b'  // 50% Off en 2da Unidad (Marrón)
 ];
 
-// ACLARACIONES EXACTAS PARA LOS CARTELES
 const aclaraciones = {
     "10% Off...": "EN EL INSTANTE",
     "Seguí Participando": "La próxima vez será",
@@ -55,7 +61,9 @@ let yaGiro = false;
 function dibujarRuleta() {
     const centro = 180;
     ctx.clearRect(0, 0, 360, 360);
+    
     for (let i = 0; i < numOpciones; i++) {
+        // Renderizado simétrico ajustado a la posición de la flecha
         const angulo = anguloInicio + (i * anguloArco);
         ctx.fillStyle = colores[i];
         ctx.beginPath();
@@ -68,11 +76,25 @@ function dibujarRuleta() {
         ctx.translate(centro, centro);
         ctx.rotate(angulo + anguloArco / 2);
         ctx.fillStyle = (colores[i] === '#ded4cc') ? '#121212' : '#ffffff';
-        ctx.font = "bold 10px sans-serif";
+        ctx.font = "bold 9px sans-serif";
         ctx.textAlign = "right";
         ctx.fillText(opciones[i], centro - 25, 5);
         ctx.restore();
     }
+
+    // Logo centrado
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centro, centro, 55, 0, 2 * Math.PI); 
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.closePath();
+    ctx.clip(); 
+
+    if (imagenLogo.complete && imagenLogo.naturalWidth !== 0) {
+        ctx.drawImage(imagenLogo, 125, 125, 110, 110);
+    }
+    ctx.restore();
 }
 
 function validarYEnviar(event) {
@@ -109,11 +131,11 @@ function comenzarGiro() {
     yaGiro = true;
     document.getElementById('btn-gira-ruleta').disabled = true;
 
-    // Al tener todos un 8.3% de probabilidad, elegimos un índice completamente al azar del 0 al 11
+    // Elección con probabilidad idéntica (1 gajo de 12 = 8.33%)
     const indiceGanador = Math.floor(Math.random() * numOpciones);
 
-    // Calculamos los giros necesarios para que caiga exactamente donde apunta la flecha de la derecha
     const vueltasCompletas = 6 * 2 * Math.PI;
+    // Cálculo inverso para que la animación frene exactamente en el sector correcto frente a la flecha
     const anguloDestino = (2 * Math.PI) - (indiceGanador * anguloArco) - (anguloArco / 2);
     const anguloFinalTotal = vueltasCompletas + anguloDestino;
 
@@ -143,5 +165,4 @@ function cerrarModal() {
     document.getElementById('miModal').style.display = 'none';
 }
 
-// Dibujar por primera vez al cargar
 setTimeout(dibujarRuleta, 100);
