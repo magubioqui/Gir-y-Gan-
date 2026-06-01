@@ -17,7 +17,8 @@
         #seccion-ruleta { display: none; text-align: center; position: relative; }
         .contenedor-canvas { position: relative; display: inline-block; margin-top: 15px; }
         #canvas { border: 6px solid #be986b; border-radius: 50%; max-width: 100%; height: auto; background: #252525; }
-        .flecha { position: absolute; right: -12px; top: 50%; transform: translateY(-50%) rotate(180deg); width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-right: 22px solid #be986b; z-index: 10; }
+        /* Flecha apuntando a la izquierda (hacia la ruleta) */
+        .flecha { position: absolute; right: -12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; border-right: 22px solid #be986b; z-index: 10; }
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
         .modal-content { background-color: #222; margin: auto; padding: 25px; border: 2px solid #be986b; width: 85%; max-width: 350px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: aparecer 0.3s ease-out; }
         .modal-premio { font-size: 24px; font-weight: bold; color: #be986b; margin: 15px 0 5px 0; }
@@ -27,7 +28,6 @@
     </style>
 </head>
 <body>
-
     <div id="seccion-registro" class="card">
         <h2>Bright Candle Co.</h2>
         <p>Introduce tus datos para activar tu tirada en el Gira y Gana.</p>
@@ -37,7 +37,6 @@
             <button type="submit" id="btn-registro">INGRESAR AHORA</button>
         </form>
     </div>
-
     <div id="seccion-ruleta" class="card">
         <h2>¡Suerte, <span id="nombre-usuario"></span>!</h2>
         <div class="contenedor-canvas">
@@ -46,7 +45,6 @@
         </div>
         <button id="btn-gira-ruleta" onclick="comenzarGiro()">¡GIRAR RULETA!</button>
     </div>
-
     <div id="miModal" class="modal">
         <div class="modal-content">
             <h2>Resultado</h2>
@@ -55,8 +53,6 @@
             <button class="btn-cerrar" onclick="cerrarModal()">Aceptar</button>
         </div>
     </div>
-
-    <!-- Enlazamos la lógica que crearemos en el paso 2 -->
     <script src="script.js"></script>
 </body>
 </html>
