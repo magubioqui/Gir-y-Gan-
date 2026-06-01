@@ -1,13 +1,6 @@
 // REEMPLAZA las letras de abajo con la URL de tu Google Sheets
 const URL_GOOGLE_SHEETS = 'https://script.google.com/macros/s/AKfycbwdaIilBbmjdlx0p1PtWEPJpg-VWBf5RiASKaA2ePyf9mTHMlILgQJupCRgtrPCaVQcoA/exec';
 
-const imagenLogo = new Image();
-imagenLogo.src = 'logo.png'; 
-
-imagenLogo.onload = function() {
-    dibujarRuleta();
-};
-
 // LOS 12 ELEMENTOS EXACTOS EN SENTIDO HORARIO EMPEZANDO DESDE LA FLECHA
 const opciones = [
     "Uff...", 
@@ -63,7 +56,6 @@ function dibujarRuleta() {
     ctx.clearRect(0, 0, 360, 360);
     
     for (let i = 0; i < numOpciones; i++) {
-        // Renderizado simétrico ajustado a la posición de la flecha
         const angulo = anguloInicio + (i * anguloArco);
         ctx.fillStyle = colores[i];
         ctx.beginPath();
@@ -78,22 +70,17 @@ function dibujarRuleta() {
         ctx.fillStyle = (colores[i] === '#ded4cc') ? '#121212' : '#ffffff';
         ctx.font = "bold 9px sans-serif";
         ctx.textAlign = "right";
-        ctx.fillText(opciones[i], centro - 25, 5);
+        // Se cambió a centro - 12 para empujar los textos bien hacia afuera
+        ctx.fillText(opciones[i], centro - 12, 5);
         ctx.restore();
     }
 
-    // Logo centrado
+    // Círculo blanco central
     ctx.save();
     ctx.beginPath();
     ctx.arc(centro, centro, 55, 0, 2 * Math.PI); 
     ctx.fillStyle = "#ffffff";
     ctx.fill();
-    ctx.closePath();
-    ctx.clip(); 
-
-    if (imagenLogo.complete && imagenLogo.naturalWidth !== 0) {
-        ctx.drawImage(imagenLogo, 125, 125, 110, 110);
-    }
     ctx.restore();
 }
 
@@ -131,11 +118,9 @@ function comenzarGiro() {
     yaGiro = true;
     document.getElementById('btn-gira-ruleta').disabled = true;
 
-    // Elección con probabilidad idéntica (1 gajo de 12 = 8.33%)
     const indiceGanador = Math.floor(Math.random() * numOpciones);
 
     const vueltasCompletas = 6 * 2 * Math.PI;
-    // Cálculo inverso para que la animación frene exactamente en el sector correcto frente a la flecha
     const anguloDestino = (2 * Math.PI) - (indiceGanador * anguloArco) - (anguloArco / 2);
     const anguloFinalTotal = vueltasCompletas + anguloDestino;
 
