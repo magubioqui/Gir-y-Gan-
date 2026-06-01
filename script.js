@@ -1,6 +1,13 @@
 // REEMPLAZA las letras de abajo con la URL de tu Google Sheets
 const URL_GOOGLE_SHEETS = 'https://script.google.com/macros/s/AKfycbwdaIilBbmjdlx0p1PtWEPJpg-VWBf5RiASKaA2ePyf9mTHMlILgQJupCRgtrPCaVQcoA/exec';
 
+const imagenLogo = new Image();
+imagenLogo.src = 'logo.png'; 
+
+imagenLogo.onload = function() {
+    dibujarRuleta();
+};
+
 // LOS 12 ELEMENTOS EXACTOS EN SENTIDO HORARIO EMPEZANDO DESDE LA FLECHA
 const opciones = [
     "Uff...", 
@@ -50,6 +57,7 @@ const numOpciones = opciones.length;
 const anguloArco = 2 * Math.PI / numOpciones;
 let anguloInicio = 0;
 let yaGiro = false;
+let premioActual = ""; 
 
 function dibujarRuleta() {
     const centro = 180;
@@ -70,7 +78,6 @@ function dibujarRuleta() {
         ctx.fillStyle = (colores[i] === '#ded4cc') ? '#121212' : '#ffffff';
         ctx.font = "bold 9px sans-serif";
         ctx.textAlign = "right";
-        // Se cambió a centro - 12 para empujar los textos bien hacia afuera
         ctx.fillText(opciones[i], centro - 12, 5);
         ctx.restore();
     }
@@ -136,9 +143,9 @@ function comenzarGiro() {
         if (paso < pasosTotales) {
             requestAnimationFrame(animar);
         } else {
-            const premioGanado = opciones[indiceGanador];
-            const aclaracionPremio = aclaraciones[premioGanado] || "";
-            document.getElementById('modal-premio').innerText = premioGanado;
+            premioActual = opciones[indiceGanador];
+            const aclaracionPremio = aclaraciones[premioActual] || "";
+            document.getElementById('modal-premio').innerText = premioActual;
             document.getElementById('modal-aclaracion').innerText = aclaracionPremio;
             document.getElementById('miModal').style.display = 'flex';
         }
@@ -148,6 +155,16 @@ function comenzarGiro() {
 
 function cerrarModal() {
     document.getElementById('miModal').style.display = 'none';
+    
+    // LOGICA DE REINTENTO: Si el premio es "Uff...", habilitamos el botón para que tire de nuevo
+    if (premioActual === "Uff...") {
+        yaGiro = false;
+        document.getElementById('btn-gira-ruleta').disabled = false;
+        document.getElementById('btn-gira-ruleta').innerText = "¡PROBÁ OTRA VEZ!";
+    } else {
+        // Si ganó cualquier otra cosa, el botón se queda bloqueado permanentemente
+        document.getElementById('btn-gira-ruleta').innerText = "¡GRACIAS POR JUGAR!";
+    }
 }
 
 setTimeout(dibujarRuleta, 100);
