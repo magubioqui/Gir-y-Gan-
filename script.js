@@ -36,7 +36,6 @@ let anguloInicio = 0;
 let yaGiro = false;
 let premioActual = "";
 
-// Variables globales para recordar los datos del usuario durante el juego
 let nombreUsuario = "";
 let telefonoUsuario = "";
 
@@ -62,19 +61,23 @@ function dibujarRuleta() {
         ctx.restore();
     }
 
-    // Círculo blanco central
+    // Círculo blanco central con el logo recortado
     ctx.save();
     ctx.beginPath();
     ctx.arc(centro, centro, 55, 0, 2 * Math.PI); 
     ctx.fillStyle = "#ffffff";
     ctx.fill();
+    ctx.closePath();
+    ctx.clip(); 
+
+    if (imagenLogo.complete && imagenLogo.naturalWidth !== 0) {
+        ctx.drawImage(imagenLogo, 125, 125, 110, 110);
+    }
     ctx.restore();
 }
 
-// El formulario ahora solo guarda los datos localmente y muestra la ruleta
 function validarYEnviar(event) {
     event.preventDefault();
-    
     nombreUsuario = document.getElementById('nombre').value;
     telefonoUsuario = document.getElementById('telefono').value;
 
@@ -89,7 +92,6 @@ function comenzarGiro() {
     yaGiro = true;
     document.getElementById('btn-gira-ruleta').disabled = true;
 
-    // Modo real activado por defecto usando tu función probabilística
     const indiceGanador = elegirIndiceGanador();
 
     const vueltasCompletas = 6 * 2 * Math.PI;
@@ -109,8 +111,6 @@ function comenzarGiro() {
             requestAnimationFrame(animar);
         } else {
             premioActual = opciones[indiceGanador];
-            
-            // Enviamos los datos completos al Excel justo cuando frena la ruleta
             enviarDatosAGoogle(premioActual);
 
             document.getElementById('modal-premio').innerText = premioActual;
@@ -121,7 +121,6 @@ function comenzarGiro() {
     animar();
 }
 
-// Función encargada de despachar la información a tu base de datos
 function enviarDatosAGoogle(premio) {
     fetch(URL_GOOGLE_SHEETS, {
         method: 'POST',
@@ -130,15 +129,15 @@ function enviarDatosAGoogle(premio) {
         body: JSON.stringify({ 
             nombre: nombreUsuario, 
             telefono: telefonoUsuario,
-            premio: premio // Enviamos el gajo donde cayó
+            premio: premio
         })
     })
     .catch(error => console.error('Error al guardar:', error));
 }
 
-// Sistema de pesos probabilísticos (Suma total = 100)
 function elegirIndiceGanador() {
-    const probabilidades = [10, 10, 20, 10, 10, 10, 10, 10, 4, 1, 3, 2];
+    // Lista de probabilidades corregida (Suma total = 100%)
+    const probabilidades = [8.3, 8.3, 8.3, 8.4, 8.3, 8.3, 8.3, 8.4, 8.3, 8.3, 8.3, 8.5];
     const random = Math.random() * 100;
     let suma = 0;
     for (let i = 0; i < numOpciones; i++) {
@@ -150,7 +149,6 @@ function elegirIndiceGanador() {
 
 function cerrarModal() {
     document.getElementById('miModal').style.display = 'none';
-    
     if (premioActual === "Uff...") {
         yaGiro = false;
         document.getElementById('btn-gira-ruleta').disabled = false;
