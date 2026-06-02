@@ -3,41 +3,18 @@ const URL_GOOGLE_SHEETS = 'https://script.google.com/macros/s/AKfycbwdaIilBbmjdl
 
 const imagenLogo = new Image();
 imagenLogo.src = 'logo.png'; 
+imagenLogo.onload = function() { dibujarRuleta(); };
 
-imagenLogo.onload = function() {
-    dibujarRuleta();
-};
-
-// LOS 12 ELEMENTOS EXACTOS EN SENTIDO HORARIO EMPEZANDO DESDE LA FLECHA
 const opciones = [
-    "Uff...", 
-    "10% Off...", 
-    "Seguí Participando", 
-    "3x2 En Seleccionados", 
-    "10% Off...", 
-    "2x1 En Seleccionados", 
-    "Uff...", 
-    "10% Off...", 
-    "25% Off Próxima Compra", 
-    "¡Felicidades!", 
-    "10% Off...", 
-    "50% Off en 2da Unidad"
+    "Uff...", "10% Off...", "Seguí Participando", "3x2 En Seleccionados", 
+    "10% Off...", "2x1 En Seleccionados", "Uff...", "10% Off...", 
+    "25% Off Próxima Compra", "¡Felicidades!", "10% Off...", "50% Off en 2da Unidad"
 ];
 
-// COLORES EXACTOS PARA LOS 12 ELEMENTOS CORRESPONDIENTES
 const colores = [
-    '#b56618', // Uff... (Naranja)
-    '#ded4cc', // 10% Off... (Beige)
-    '#8a1e1e', // Seguí Participando (Rojo)
-    '#be986b', // 3x2 En Seleccionados (Marrón)
-    '#ded4cc', // 10% Off... (Beige)
-    '#be986b', // 2x1 En Seleccionados (Marrón)
-    '#b56618', // Uff... (Naranja)
-    '#ded4cc', // 10% Off... (Beige)
-    '#be986b', // 25% Off Próxima Compra (Marrón)
-    '#3b7a3b', // ¡Felicidades! (Verde)
-    '#ded4cc', // 10% Off... (Beige)
-    '#be986b'  // 50% Off en 2da Unidad (Marrón)
+    '#b56618', '#ded4cc', '#8a1e1e', '#be986b', 
+    '#ded4cc', '#be986b', '#b56618', '#ded4cc', 
+    '#be986b', '#3b7a3b', '#ded4cc', '#be986b'
 ];
 
 const aclaraciones = {
@@ -57,12 +34,15 @@ const numOpciones = opciones.length;
 const anguloArco = 2 * Math.PI / numOpciones;
 let anguloInicio = 0;
 let yaGiro = false;
-let premioActual = ""; 
+let premioActual = "";
+
+// Variables globales para recordar los datos del usuario durante el juego
+let nombreUsuario = "";
+let telefonoUsuario = "";
 
 function dibujarRuleta() {
     const centro = 180;
     ctx.clearRect(0, 0, 360, 360);
-    
     for (let i = 0; i < numOpciones; i++) {
         const angulo = anguloInicio + (i * anguloArco);
         ctx.fillStyle = colores[i];
@@ -91,33 +71,17 @@ function dibujarRuleta() {
     ctx.restore();
 }
 
+// El formulario ahora solo guarda los datos localmente y muestra la ruleta
 function validarYEnviar(event) {
     event.preventDefault();
-    const btnRegistro = document.getElementById('btn-registro');
-    btnRegistro.disabled = true;
-    btnRegistro.innerText = "Registrando...";
+    
+    nombreUsuario = document.getElementById('nombre').value;
+    telefonoUsuario = document.getElementById('telefono').value;
 
-    const nombre = document.getElementById('nombre').value;
-    const phone = document.getElementById('telefono').value;
-
-    fetch(URL_GOOGLE_SHEETS, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nombre, telefono: phone })
-    })
-    .then(() => {
-        document.getElementById('nombre-usuario').innerText = nombre;
-        document.getElementById('seccion-registro').style.display = 'none';
-        document.getElementById('seccion-ruleta').style.display = 'block';
-        dibujarRuleta();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Ocurrió un error. Intenta ingresar de nuevo.');
-        btnRegistro.disabled = false;
-        btnRegistro.innerText = "INGRESAR AHORA";
-    });
+    document.getElementById('nombre-usuario').innerText = nombreUsuario;
+    document.getElementById('seccion-registro').style.display = 'none';
+    document.getElementById('seccion-ruleta').style.display = 'block';
+    dibujarRuleta();
 }
 
 function comenzarGiro() {
@@ -125,7 +89,8 @@ function comenzarGiro() {
     yaGiro = true;
     document.getElementById('btn-gira-ruleta').disabled = true;
 
-    const indiceGanador = Math.floor(Math.random() * numOpciones);
+    // Modo real activado por defecto usando tu función probabilística
+    const indiceGanador = elegirIndiceGanador();
 
     const vueltasCompletas = 6 * 2 * Math.PI;
     const anguloDestino = (2 * Math.PI) - (indiceGanador * anguloArco) - (anguloArco / 2);
@@ -144,25 +109,53 @@ function comenzarGiro() {
             requestAnimationFrame(animar);
         } else {
             premioActual = opciones[indiceGanador];
-            const aclaracionPremio = aclaraciones[premioActual] || "";
+            
+            // Enviamos los datos completos al Excel justo cuando frena la ruleta
+            enviarDatosAGoogle(premioActual);
+
             document.getElementById('modal-premio').innerText = premioActual;
-            document.getElementById('modal-aclaracion').innerText = aclaracionPremio;
+            document.getElementById('modal-aclaracion').innerText = aclaraciones[premioActual] || "";
             document.getElementById('miModal').style.display = 'flex';
         }
     }
     animar();
 }
 
+// Función encargada de despachar la información a tu base de datos
+function enviarDatosAGoogle(premio) {
+    fetch(URL_GOOGLE_SHEETS, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            nombre: nombreUsuario, 
+            telefono: telefonoUsuario,
+            premio: premio // Enviamos el gajo donde cayó
+        })
+    })
+    .catch(error => console.error('Error al guardar:', error));
+}
+
+// Sistema de pesos probabilísticos (Suma total = 100)
+function elegirIndiceGanador() {
+    const probabilidades = [10, 10, 20, 10, 10, 10, 10, 10, 4, 1, 3, 2];
+    const random = Math.random() * 100;
+    let suma = 0;
+    for (let i = 0; i < numOpciones; i++) {
+        suma += probabilidades[i];
+        if (random <= suma) return i;
+    }
+    return 0;
+}
+
 function cerrarModal() {
     document.getElementById('miModal').style.display = 'none';
     
-    // LOGICA DE REINTENTO: Si el premio es "Uff...", habilitamos el botón para que tire de nuevo
     if (premioActual === "Uff...") {
         yaGiro = false;
         document.getElementById('btn-gira-ruleta').disabled = false;
         document.getElementById('btn-gira-ruleta').innerText = "¡PROBÁ OTRA VEZ!";
     } else {
-        // Si ganó cualquier otra cosa, el botón se queda bloqueado permanentemente
         document.getElementById('btn-gira-ruleta').innerText = "¡GRACIAS POR JUGAR!";
     }
 }
