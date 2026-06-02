@@ -125,7 +125,7 @@ function comenzarGiro() {
     yaGiro = true;
     document.getElementById('btn-gira-ruleta').disabled = true;
 
-    const indiceGanador = 3
+    const indiceGanador = 9
 
     const vueltasCompletas = 6 * 2 * Math.PI;
     const anguloDestino = (2 * Math.PI) - (indiceGanador * anguloArco) - (anguloArco / 2);
